@@ -212,6 +212,12 @@ wheels = [
 ]
 
 [[package]]
+name = "elosports"
+version = "0.1.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/2a/f9/3701e607903cda3dcdc4ee9075beba7e1a5e3e4f4a038de4376e25b7bb88/elosports-0.1.1.tar.gz", hash = "sha256:b5c8d78176edc37c9ac671b8a2f43859a765ca50126667bcf3972d3d387628e6", size = 1803, upload-time = "2018-04-10T02:00:01.007Z" }
+
+[[package]]
 name = "fastapi"
 version = "0.136.1"
 source = { registry = "https://pypi.org/simple" }
@@ -831,6 +837,7 @@ name = "squash"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "elosports" },
     { name = "fastapi" },
     { name = "firebase-admin" },
     { name = "jinja2" },
@@ -848,6 +855,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "elosports", specifier = ">=0.1.1" },
     { name = "fastapi", specifier = ">=0.136.1" },
     { name = "firebase-admin", specifier = ">=7.4.0" },
     { name = "jinja2", specifier = ">=3.1.6" },

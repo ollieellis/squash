@@ -6,7 +6,7 @@ class Profile(BaseModel):
     id: Optional[str] = None
     first_name: str
     last_name: str
-    elo: int = 1200
+    elo: float = 1200.0
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class Match(BaseModel):
@@ -16,5 +16,5 @@ class Match(BaseModel):
     player1_score: int
     player2_score: int
     winner_id: str
-    elo_change: int
+    elo_change: float
     created_at: datetime = Field(default_factory=datetime.utcnow)

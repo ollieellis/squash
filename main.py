@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.templating import Jinja2Templates
 from database import connect_to_mongo, close_mongo_connection, get_db
 from models import Profile, Match
-from elo import get_new_elos
+from elo import calculate_squash_elo
 from contextlib import asynccontextmanager
 from bson import ObjectId
 
@@ -40,20 +40,37 @@ async def read_profile(profile_id: str, request: Request):
         raise HTTPException(status_code=404, detail="Profile not found")
     profile = Profile(**{**doc, "id": str(doc["_id"])})
 
+    # Fetch all matches and filter locally for simplicity
     matches_cursor = db.matches.find({"$or": [{"player1_id": profile_id}, {"player2_id": profile_id}]}).sort("created_at", -1)
-    player_matches = [Match(**{**m, "id": str(m["_id"])}) async for m in matches_cursor]
+
+    recent_matches = []
+    async for m in matches_cursor:
+        match_obj = Match(**{**m, "id": str(m["_id"])})
+
+        # Determine opponent
+        opponent_id = match_obj.player2_id if match_obj.player1_id == profile_id else match_obj.player1_id
+        opponent_doc = await db.profiles.find_one({"_id": ObjectId(opponent_id)})
+        opponent_name = f"{opponent_doc['first_name']} {opponent_doc['last_name']}" if opponent_doc else "Unknown"
+        opponent_elo = opponent_doc.get("elo", 0) if opponent_doc else 0
+
+        recent_matches.append({
+            "match": match_obj,
+            "opponent_id": opponent_id,
+            "opponent_name": opponent_name,
+            "opponent_elo": int(opponent_elo)
+        })
 
     form_guide = []
-    for match in player_matches[:5]:
+    for entry in recent_matches[:5]:
+        match = entry["match"]
         res = "D" if match.winner_id == "draw" else ("W" if match.winner_id == profile_id else "L")
         form_guide.append({"result": res, "match_id": match.id})
 
     return templates.TemplateResponse(request=request, name="profile.html", context={
         "profile": profile, 
         "form_guide": form_guide,
-        "recent_matches": player_matches
+        "recent_matches": recent_matches
     })
-
 @app.post("/profiles/")
 async def create_profile(request: Request):
     data = await request.json()
@@ -91,14 +108,17 @@ async def log_match(request: Request):
     
     if not p1 or not p2:
         raise HTTPException(status_code=404, detail="Player not found")
-    
+    # Update P1/P2 Won Logic
     p1_won = p1_score > p2_score
     winner_id = p1_id if p1_score > p2_score else (p2_id if p2_score > p1_score else "draw")
-    
-    new_p1_elo, new_p2_elo, delta = get_new_elos(p1["elo"], p2["elo"], p1_won)
-    
+
+    # NEW: Using library-based Elo calculation
+    new_p1_elo, new_p2_elo, delta = calculate_squash_elo(p1["elo"], p2["elo"], p1_score, p2_score)
+
+    # Update Player Profiles
     await db.profiles.update_one({"_id": ObjectId(p1_id)}, {"$set": {"elo": new_p1_elo}})
     await db.profiles.update_one({"_id": ObjectId(p2_id)}, {"$set": {"elo": new_p2_elo}})
+
     
     match = Match(
         player1_id=p1_id,

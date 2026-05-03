@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "elosports>=0.1.1",
     "fastapi>=0.136.1",
     "firebase-admin>=7.4.0",
     "jinja2>=3.1.6",

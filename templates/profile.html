@@ -10,6 +10,14 @@
         .stat-card { background: #f9f9f9; padding: 20px; border-radius: 8px; text-align: center; border: 1px solid #eee; }
         .stat-value { display: block; font-size: 1.5rem; font-weight: bold; color: #2ecc71; }
         .stat-label { color: #666; font-size: 0.9rem; text-transform: uppercase; }
+        /* Make table compact and responsive */
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        th, td { padding: 8px 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        th:nth-child(1) { width: 20%; } /* Date */
+        th:nth-child(2) { width: 35%; } /* Name/ELO */
+        th:nth-child(3) { width: 15%; } /* Score */
+        th:nth-child(4) { width: 15%; } /* Result */
+        th:nth-child(5) { width: 15%; } /* ELO +/- */
     </style>
 </head>
 <body>
@@ -61,22 +69,20 @@
             </tr>
         </thead>
         <tbody>
-            {% for match in recent_matches %}
+            {% for entry in recent_matches %}
+            {% set match = entry.match %}
             <tr>
                 <td>{{ match.created_at.strftime('%Y-%m-%d') }}</td>
                 <td>
-                    {% if match.player1_id == profile.id %}
-                        Player 2 ({{ match.player2_id[:5] }})
-                    {% else %}
-                        Player 1 ({{ match.player1_id[:5] }})
-                    {% endif %}
+                    <a href="/profiles/{{ entry.opponent_id }}">{{ entry.opponent_name }}</a> 
+                    ({{ entry.opponent_elo }})
                 </td>
                 <td>{{ match.player1_score }} - {{ match.player2_score }}</td>
                 <td>
                     {% if match.winner_id == profile.id %} W {% elif match.winner_id == 'draw' %} D {% else %} L {% endif %}
                 </td>
                 <td>
-                    {% if match.winner_id == profile.id %}+{% else %}-{% endif %}{{ match.elo_change }}
+                    {% if match.winner_id == profile.id %}+{% else %}-{% endif %}{{ match.elo_change|int }}
                 </td>
             </tr>
             {% endfor %}

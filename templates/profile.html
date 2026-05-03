@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ profile.first_name }} {{ profile.last_name }} - Profile</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+    <style>
+        .profile-header { display: flex; align-items: center; gap: 20px; }
+        .avatar { width: 80px; height: 80px; background: #3498db; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; margin: 20px 0; }
+        .stat-card { background: #f9f9f9; padding: 20px; border-radius: 8px; text-align: center; border: 1px solid #eee; }
+        .stat-value { display: block; font-size: 1.5rem; font-weight: bold; color: #2ecc71; }
+        .stat-label { color: #666; font-size: 0.9rem; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/">Home</a> | <a href="/profiles/">Leaderboard</a>
+    </nav>
+
+    <div class="profile-header">
+        <div class="avatar">{{ profile.first_name[0] }}{{ profile.last_name[0] }}</div>
+        <div>
+            <h1>{{ profile.first_name }} {{ profile.last_name }}</h1>
+            <p>Joined {{ profile.created_at.strftime('%B %Y') }}</p>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <span class="stat-value">{{ profile.elo }}</span>
+            <span class="stat-label">Current ELO</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-value">{{ recent_matches|length }}</span>
+            <span class="stat-label">Games Played</span>
+        </div>
+        <div class="stat-card">
+            <div style="display: flex; justify-content: center; gap: 5px; margin-top: 5px;">
+                {% for entry in form_guide %}
+                <a href="/matches/{{ entry.match_id }}" 
+                   style="text-decoration: none; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; border-radius: 3px; font-weight: bold; color: white; background: {% if entry.result == 'W' %}#2ecc71{% elif entry.result == 'L' %}#e74c3c{% else %}#95a5a6{% endif %};"
+                   title="{{ entry.result }}">
+                    {{ entry.result }}
+                </a>
+                {% endfor %}
+            </div>
+            <span class="stat-label">Form (Last 5)</span>
+        </div>
+    </div>
+
+    <h2>Recent Matches</h2>
+    {% if recent_matches %}
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Opponent</th>
+                <th>Score</th>
+                <th>Result</th>
+                <th>ELO +/-</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for match in recent_matches %}
+            <tr>
+                <td>{{ match.created_at.strftime('%Y-%m-%d') }}</td>
+                <td>
+                    {% if match.player1_id == profile.id %}
+                        Player 2 ({{ match.player2_id[:5] }})
+                    {% else %}
+                        Player 1 ({{ match.player1_id[:5] }})
+                    {% endif %}
+                </td>
+                <td>{{ match.player1_score }} - {{ match.player2_score }}</td>
+                <td>
+                    {% if match.winner_id == profile.id %} W {% elif match.winner_id == 'draw' %} D {% else %} L {% endif %}
+                </td>
+                <td>
+                    {% if match.winner_id == profile.id %}+{% else %}-{% endif %}{{ match.elo_change }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No matches recorded yet. <a href="/">Log a match?</a></p>
+    {% endif %}
+
+    <hr>
+    <a href="/profiles/">← Back to Leaderboard</a>
+</body>
+</html>

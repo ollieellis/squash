@@ -1,0 +1,7 @@
+<div class="profile-card" style="border: 1px solid #ccc; padding: 10px; margin-top: 10px;">
+    <h3>Profile Created!</h3>
+    <p><strong>Name:</strong> {{ profile.first_name }} {{ profile.last_name }}</p>
+    <p><strong>ELO:</strong> {{ profile.elo }}</p>
+    <p><strong>ID:</strong> {{ profile.id }}</p>
+    <a href="/profiles/{{ profile.id }}">View Full Profile</a>
+</div>

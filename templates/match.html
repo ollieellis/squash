@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Match Detail</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+    <style>
+        .match-container { text-align: center; margin-top: 50px; }
+        .score-display { font-size: 3rem; font-weight: bold; margin: 20px 0; }
+        .player-names { display: flex; justify-content: center; gap: 40px; font-size: 1.5rem; }
+        .elo-impact { color: #888; font-size: 1rem; }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/">Home</a> | <a href="/profiles/">Leaderboard</a>
+    </nav>
+
+    <div class="match-container">
+        <h1>Match Result</h1>
+        <p>{{ match.created_at.strftime('%B %d, %Y at %H:%M') }}</p>
+
+        <div class="player-names">
+            <div>{{ p1_name }}</div>
+            <div>vs</div>
+            <div>{{ p2_name }}</div>
+        </div>
+
+        <div class="score-display">
+            {{ match.player1_score }} - {{ match.player2_score }}
+        </div>
+
+        <div class="elo-impact">
+            ELO Change: {{ match.elo_change }} points
+        </div>
+        
+        <p>
+            Winner: 
+            <strong>
+            {% if match.winner_id == 'draw' %} Draw {% elif match.winner_id == match.player1_id %} {{ p1_name }} {% else %} {{ p2_name }} {% endif %}
+            </strong>
+        </p>
+    </div>
+
+    <hr>
+    <a href="/profiles/">Back to Leaderboard</a>
+</body>
+</html>

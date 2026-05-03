@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Squash Players - Leaderboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+    <style>
+        .leaderboard-table { width: 100%; border-collapse: collapse; }
+        .leaderboard-table th, .leaderboard-table td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; }
+        .elo-badge { font-weight: bold; color: #2ecc71; }
+        .rank { color: #888; width: 50px; }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/">Home</a> | <a href="/profiles/">Leaderboard</a>
+    </nav>
+
+    <h1>Squash Leaderboard</h1>
+    
+    <table class="leaderboard-table">
+        <thead>
+            <tr>
+                <th class="rank">Rank</th>
+                <th>Player</th>
+                <th>ELO</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for profile in profiles %}
+            <tr>
+                <td class="rank">#{{ loop.index }}</td>
+                <td>{{ profile.first_name }} {{ profile.last_name }}</td>
+                <td class="elo-badge">{{ profile.elo }}</td>
+                <td><a href="/profiles/{{ profile.id }}">View Profile</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <hr>
+    <a href="/">+ Add New Player</a>
+</body>
+</html>

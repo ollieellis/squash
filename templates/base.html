@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Squash League</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+    <style>
+        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid #eee; margin-bottom: 2rem; }
+        .nav-links { display: flex; gap: 20px; }
+        .nav-links a { text-decoration: none; font-weight: bold; }
+        .profile-link { font-weight: bold; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div><strong>Squash League</strong></div>
+        <div class="nav-links">
+            <a href="/profiles/" {% if request.url.path == '/profiles/' %}style="color: #2ecc71; border-bottom: 2px solid #2ecc71;"{% endif %}>Leaderboard</a>
+            <a href="/matches/" {% if request.url.path == '/matches/' %}style="color: #2ecc71; border-bottom: 2px solid #2ecc71;"{% endif %}>Matches</a>
+            <a href="/sessions/" {% if request.url.path == '/sessions/' %}style="color: #2ecc71; border-bottom: 2px solid #2ecc71;"{% endif %}>Sessions</a>
+        </div>
+        <div>
+            <a href="/profiles/my-profile" class="profile-link">My Profile</a>
+        </div>
+    </nav>
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

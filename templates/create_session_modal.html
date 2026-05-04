@@ -1,0 +1,25 @@
+<!-- templates/create_session_modal.html -->
+<dialog id="sessionModal">
+    <form method="post" action="/sessions/create">
+        <h3>Create New Session</h3>
+        <label>Date: <input type="date" name="date" value="{{ now_date }}" required></label>
+        <label>Start Time: <input type="time" name="start_time" value="08:00" required></label>
+        <label>Duration: 
+            <select name="duration_minutes">
+                <option value="30">30 mins</option>
+                <option value="45">45 mins</option>
+                <option value="60" selected>1 hour</option>
+                <option value="90">1.5 hours</option>
+                <option value="120">2 hours</option>
+            </select>
+        </label>
+        <label>Location: <input type="text" name="location" value="Finsbury Leisure Centre" required></label>
+        <label>Num courts Booked: <input type="number" name="num_courts" value="0" min="0"></label>
+        <label>Max players (optional): <input type="number" name="max_players" min="1"></label>
+        <footer>
+            <button type="button" onclick="document.getElementById('sessionModal').close()">Cancel</button>
+            <button type="submit">Create</button>
+        </footer>
+    </form>
+</dialog>
+<button onclick="document.getElementById('sessionModal').showModal()">+ New Session</button>

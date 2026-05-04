@@ -1,32 +1,31 @@
 {% extends "base.html" %}
 {% block content %}
-    <h1>All Matches</h1>
+    <h1>Session: {{ session.start_date.strftime('%Y-%m-%d') }}</h1>
+    <p><strong>Location:</strong> {{ session.location }}</p>
+    <p><strong>Time:</strong> {{ session.start_date.strftime('%H:%M') }} - {{ session.end_date.strftime('%H:%M') }}</p>
+    <p><strong>Players:</strong> {{ players|join(', ') }}</p>
+    
+    <h2>Matches in this Session</h2>
     <table>
         <thead>
             <tr>
-                <th>Date</th>
                 <th>Player 1</th>
                 <th>Player 2</th>
                 <th>Score</th>
                 <th>ELO Delta</th>
-                <th>Session</th>
             </tr>
         </thead>
         <tbody>
             {% for entry in matches %}
             <tr>
-                <td>{{ entry.match.created_at.strftime('%Y-%m-%d') }}</td>
                 <td>{{ entry.p1_name }}</td>
                 <td>{{ entry.p2_name }}</td>
                 <td>{{ entry.match.player1_score }} - {{ entry.match.player2_score }}</td>
                 <td>{{ entry.match.elo_change|int }}</td>
-                <td>
-                    {% if entry.match.session_id %}
-                    <a href="/sessions/{{ entry.match.session_id }}">View Session</a>
-                    {% else %}
-                    -
-                    {% endif %}
-                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" style="text-align: center;">No matches played in this session yet.</td>
             </tr>
             {% endfor %}
         </tbody>

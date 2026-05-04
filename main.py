@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.templating import Jinja2Templates
 from database import connect_to_mongo, close_mongo_connection, get_db
-from models import Profile, Match
+from models import Profile, Match, Session
 from elo import calculate_squash_elo
 from contextlib import asynccontextmanager
 from bson import ObjectId
@@ -105,7 +105,15 @@ async def log_match(request: Request):
     await db.profiles.update_one({"_id": ObjectId(p1_id)}, {"$set": {"elo": new_p1_elo}})
     await db.profiles.update_one({"_id": ObjectId(p2_id)}, {"$set": {"elo": new_p2_elo}})
     
-    match = Match(player1_id=p1_id, player2_id=p2_id, player1_score=p1_score, player2_score=p2_score, winner_id=winner_id, elo_change=delta)
+    match = Match(
+        player1_id=p1_id, 
+        player2_id=p2_id, 
+        player1_score=p1_score, 
+        player2_score=p2_score, 
+        winner_id=winner_id, 
+        elo_change=delta,
+        session_id=data.get("session_id") or None
+    )
     result = await db.matches.insert_one(match.model_dump(exclude={"id"}))
     
     return templates.TemplateResponse(request=request, name="match_success.html", context={
@@ -141,3 +149,132 @@ async def list_matches(request: Request):
             "p2_name": f"{p2['first_name']} {p2['last_name']}" if p2 else "Unknown"
         })
     return templates.TemplateResponse(request=request, name="matches.html", context={"matches": enriched})
+
+@app.get("/sessions/")
+async def list_sessions(request: Request, filter: str = "all"):
+    db = await get_db()
+    from datetime import datetime
+    now = datetime.utcnow()
+    
+    query = {}
+    if filter == "upcoming":
+        query = {"start_date": {"$gt": now}}
+    elif filter == "ongoing":
+        query = {"start_date": {"$lte": now}, "end_date": {"$gte": now}}
+    elif filter == "past":
+        query = {"end_date": {"$lt": now}}
+    # "all" is implicit (empty query)
+        
+    cursor = db.sessions.find(query).sort("start_date", 1 if filter == "upcoming" else -1)
+    sessions = [Session(**{**s, "id": str(s["_id"])}) async for s in cursor]
+    
+    return templates.TemplateResponse(request=request, name="sessions.html", context={
+        "sessions": sessions, 
+        "now_date": now.strftime("%Y-%m-%d"),
+        "filter": filter
+    })
+
+@app.post("/sessions/create")
+async def create_session(request: Request):
+    data = await request.form()
+    from datetime import datetime, timedelta
+    
+    date_str = data.get("date")
+    start_time = data.get("start_time")
+    duration = int(data.get("duration_minutes", 60))
+    
+    start_date = datetime.strptime(f"{date_str} {start_time}", "%Y-%m-%d %H:%M")
+    end_date = start_date + timedelta(minutes=duration)
+    
+    num_courts = int(data.get("num_courts", 0))
+    location = data.get("location", "Finsbury Leisure Centre")
+    max_players_input = data.get("max_players")
+    
+    # Logic: if max_players is null, derive from num_courts (3 players per court)
+    if max_players_input:
+        max_players = int(max_players_input)
+    elif num_courts > 0:
+        max_players = num_courts * 3
+    else:
+        max_players = None
+    
+    session = Session(
+        start_date=start_date, 
+        end_date=end_date, 
+        num_courts=num_courts,
+        location=location,
+        max_players=max_players
+    )
+    db = await get_db()
+    await db.sessions.insert_one(session.model_dump(exclude={"id"}))
+    
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/sessions/", status_code=303)
+
+@app.post("/sessions/{session_id}/join")
+async def join_session(session_id: str, request: Request):
+    # Hardcoded test user ID
+    TEST_USER_ID = "66358f000000000000000000"
+    
+    db = await get_db()
+    session_doc = await db.sessions.find_one({"_id": ObjectId(session_id)})
+    
+    if not session_doc:
+        raise HTTPException(status_code=404, detail="Session not found")
+        
+    session = Session(**{**session_doc, "id": str(session_doc["_id"])})
+    
+    # Check capacity
+    if session.max_players and len(session.player_ids) >= session.max_players:
+        raise HTTPException(status_code=400, detail="Session is full")
+        
+    if TEST_USER_ID not in session.player_ids:
+        await db.sessions.update_one(
+            {"_id": ObjectId(session_id)},
+            {"$push": {"player_ids": TEST_USER_ID}}
+        )
+        
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/sessions/", status_code=303)
+
+@app.get("/sessions/{session_id}")
+async def read_session(session_id: str, request: Request):
+    db = await get_db()
+    try:
+        session_doc = await db.sessions.find_one({"_id": ObjectId(session_id)})
+    except Exception:
+        raise HTTPException(status_code=404, detail="Invalid session ID")
+    
+    if not session_doc:
+        raise HTTPException(status_code=404, detail="Session not found")
+        
+    session = Session(**{**session_doc, "id": str(session_doc["_id"])})
+    
+    # Get player details
+    players = []
+    for pid in session.player_ids:
+        try:
+            p = await db.profiles.find_one({"_id": ObjectId(pid)})
+            if p:
+                players.append(f"{p['first_name']} {p['last_name']}")
+        except:
+            continue
+            
+    # Get matches for this session
+    matches_cursor = db.matches.find({"session_id": session_id})
+    matches = []
+    async for m in matches_cursor:
+        m_obj = Match(**{**m, "id": str(m["_id"])})
+        p1 = await db.profiles.find_one({"_id": ObjectId(m_obj.player1_id)})
+        p2 = await db.profiles.find_one({"_id": ObjectId(m_obj.player2_id)})
+        matches.append({
+            "match": m_obj,
+            "p1_name": f"{p1['first_name']} {p1['last_name']}" if p1 else "Unknown",
+            "p2_name": f"{p2['first_name']} {p2['last_name']}" if p2 else "Unknown"
+        })
+            
+    return templates.TemplateResponse(request=request, name="session_detail.html", context={
+        "session": session,
+        "players": players,
+        "matches": matches
+    })

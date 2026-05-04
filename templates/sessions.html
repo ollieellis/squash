@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+    <style>
+        .header-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .session-actions button { margin: 0; }
+        .join-btn { padding: 0.25rem 0.5rem; font-size: 0.8rem; background: transparent; color: #2ecc71; border: 1px solid #2ecc71; cursor: pointer; border-radius: 4px; }
+        .join-btn:hover { background-color: #2ecc71; color: white; }
+    </style>
+
+    <div class="header-group">
+        <h1>Sessions</h1>
+        <div class="session-actions">
+            {% include 'create_session_modal.html' %}
+        </div>
+    </div>
+
+    <div class="tabs">
+        <a href="/sessions/?filter=all" {% if filter == 'all' %}style="color: #2ecc71; border-bottom: 2px solid #2ecc71;"{% endif %}>All</a>
+        <a href="/sessions/?filter=upcoming" {% if filter == 'upcoming' %}style="color: #2ecc71; border-bottom: 2px solid #2ecc71;"{% endif %}>Upcoming</a>
+        <a href="/sessions/?filter=ongoing" {% if filter == 'ongoing' %}style="color: #2ecc71; border-bottom: 2px solid #2ecc71;"{% endif %}>Ongoing</a>
+        <a href="/sessions/?filter=past" {% if filter == 'past' %}style="color: #2ecc71; border-bottom: 2px solid #2ecc71;"{% endif %}>Past</a>
+    </div>
+
+    <table>
+    <thead>
+        <tr>
+            <th>Start Date</th>
+            <th>Num courts Booked</th>
+            <th>Players</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for s in sessions %}
+            <tr>
+                <td><a href="/sessions/{{ s.id }}">{{ s.start_date.strftime('%Y-%m-%d %H:%M') }}</a></td>
+                <td>{{ s.num_courts }}</td>
+                <td>{{ s.player_ids|length }}{% if s.max_players %} / {{ s.max_players }}{% endif %} players</td>
+                <td>
+                    <form action="/sessions/{{ s.id }}/join" method="post">
+                        <button type="submit" class="join-btn">Join</button>
+                    </form>
+                </td>
+            </tr>
+
+        {% else %}
+        <tr>
+            <td colspan="4" style="text-align: center;">No sessions found for this filter.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    </table>
+
+{% endblock %}

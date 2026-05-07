@@ -6,7 +6,15 @@
     <title>Squash League</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
     <style>
-        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid #eee; margin-bottom: 2rem; }
+        :root {
+            --primary: #27ae60;
+            --danger: #e74c3c;
+            --action: #3498db;
+            --muted: #888888;
+            --text-bright: #ffffff;
+            --nav-border: #eee;
+        }
+        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--nav-border); margin-bottom: 2rem; }
         .nav-links { display: flex; gap: 20px; }
         .nav-links a { text-decoration: none; font-weight: bold; }
         .profile-link { font-weight: bold; }
@@ -16,9 +24,9 @@
     <nav class="navbar">
         <div><a href="/" style="text-decoration: none; color: inherit;"><strong>Squash League</strong></a></div>
         <div class="nav-links">
-            <a href="/profiles/" {% if request.url.path == '/profiles/' %}style="color: #2ecc71; border-bottom: 2px solid #2ecc71;"{% endif %}>Leaderboard</a>
-            <a href="/matches/" {% if request.url.path == '/matches/' %}style="color: #2ecc71; border-bottom: 2px solid #2ecc71;"{% endif %}>Matches</a>
-            <a href="/sessions/" {% if request.url.path == '/sessions/' %}style="color: #2ecc71; border-bottom: 2px solid #2ecc71;"{% endif %}>Sessions</a>
+            <a href="/profiles/" {% if request.url.path == '/profiles/' %}style="color: var(--primary); border-bottom: 2px solid var(--primary);"{% endif %}>Leaderboard</a>
+            <a href="/matches/" {% if request.url.path == '/matches/' %}style="color: var(--primary); border-bottom: 2px solid var(--primary);"{% endif %}>Matches</a>
+            <a href="/sessions/" {% if request.url.path == '/sessions/' %}style="color: var(--primary); border-bottom: 2px solid var(--primary);"{% endif %}>Sessions</a>
         </div>
         <div>
             {% if user %}

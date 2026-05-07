@@ -2,17 +2,17 @@
 
 {% block content %}
 <style>
-    .match-container { text-align: center; margin-top: 20px; padding: 20px; border: 1px solid #eee; border-radius: 8px; background-color: #fff; }
-    .score-display { font-size: 4rem; font-weight: bold; margin: 10px 0; color: #2c3e50; }
+    .match-container { text-align: center; margin-top: 20px; padding: 20px; }
+    .score-display { font-size: 4rem; font-weight: bold; margin: 10px 0; color: var(--text-bright); }
     .player-names { display: flex; justify-content: center; align-items: center; gap: 30px; font-size: 1.8rem; }
-    .vs { color: #bdc3c7; font-style: italic; font-size: 1.2rem; }
-    .elo-impact { font-size: 1.1rem; color: #2ecc71; margin-bottom: 20px; }
-    .session-link { margin-top: 30px; padding: 15px; background-color: #f9f9f9; border-radius: 8px; border: 1px solid #ddd; }
+    .vs { color: var(--muted); font-style: italic; font-size: 1.2rem; }
+    .elo-impact { font-size: 1.1rem; color: var(--primary); margin-bottom: 20px; }
+    .session-link { margin-top: 30px; padding: 15px; border-top: 1px solid var(--nav-border); }
 </style>
 
 <div class="match-container">
     <h1>Match Details</h1>
-    <p style="color: #7f8c8d;">{{ match.created_at.strftime('%A, %B %d, %Y at %H:%M') }}</p>
+    <p style="color: var(--text-bright);">{{ match.created_at.strftime('%A, %B %d, %Y at %H:%M') }}</p>
 
     <div class="player-names">
         <div>{{ p1_name }}</div>
@@ -30,7 +30,7 @@
     
     <p>
         Winner: 
-        <strong style="color: #2c3e50;">
+        <strong style="color: var(--text-bright);">
         {% if match.winner_id == 'draw' %} 
             It was a draw!
         {% elif match.winner_id == match.player1_id %} 
@@ -46,7 +46,7 @@
             <p>Part of session at <strong>{{ current_session.location }}</strong> ({{ current_session.start_date.strftime('%Y-%m-%d') }})</p>
             <a href="/sessions/{{ current_session._id }}">View Session Details</a>
         {% else %}
-            <p>This match is not yet linked to a session.</p>
+            <p style="color: var(--muted);">This match is not yet linked to a session.</p>
         {% endif %}
 
         {% if user %}

@@ -1,61 +1,68 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Squash League</title>
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
-</head>
-<body>
-    <nav>
-        <a href="/">Home</a> | <a href="/profiles/">Leaderboard</a>
-    </nav>
+{% extends "base.html" %}
+
+{% block content %}
     <h1>Squash League</h1>
 
     <p>{{ message }}</p>
+    
     <div id="content">
-        <h2>Log Match</h2>
-        <form hx-post="/matches/" hx-target="#match-result">
-            <label for="player1_id">Player 1:</label>
-            <select name="player1_id" id="player1_id" required>
-                {% for profile in profiles %}
-                <option value="{{ profile.id }}">{{ profile.first_name }} {{ profile.last_name }}</option>
-                {% endfor %}
-            </select>
-
-            <label for="player2_id">Player 2:</label>
-            <select name="player2_id" id="player2_id" required>
-                {% for profile in profiles %}
-                <option value="{{ profile.id }}">{{ profile.first_name }} {{ profile.last_name }}</option>
-                {% endfor %}
-            </select>
-
-            <label for="player1_score">Player 1 Games:</label>
-            <input type="number" name="player1_score" id="player1_score" min="0" max="5" value="0" required>
-
-            <label for="player2_score">Player 2 Games:</label>
-            <input type="number" name="player2_score" id="player2_score" min="0" max="5" value="0" required>
-
-            <button type="submit">Log Match</button>
-        </form>
-        <div id="match-result"></div>
+        <section>
+            <h2>Leaderboard Preview</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>ELO</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for profile in profiles[:5] %}
+                    <tr>
+                        <td><a href="/profiles/{{ profile.id }}">{{ profile.first_name }} {{ profile.last_name }}</a></td>
+                        <td>{{ profile.elo | int }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <p><a href="/profiles/">View full leaderboard</a></p>
+        </section>
 
         <hr>
 
-        <h2>Create Profile</h2>
+        <section>
+            <h2>Log Match</h2>
+            <form {% if user %}hx-post="/matches/" hx-target="#match-result"{% else %}action="/login" method="get"{% endif %}>
+                <label for="player1_id">Player 1:</label>
+                <select name="player1_id" id="player1_id" required>
+                    {% for profile in profiles %}
+                    <option value="{{ profile.id }}" {% if user and user.id == profile.id %}selected{% endif %}>{{ profile.first_name }} {{ profile.last_name }}</option>
+                    {% endfor %}
+                </select>
 
-        <form hx-post="/profiles/" hx-target="#result" hx-ext="json-enc">
-            <label for="first_name">First Name:</label>
-            <input type="text" id="first_name" name="first_name" required>
-            
-            <label for="last_name">Last Name:</label>
-            <input type="text" id="last_name" name="last_name" required>
-            
-            <button type="submit">Create Profile</button>
-        </form>
-        <div id="result"></div>
+                <label for="player2_id">Player 2:</label>
+                <select name="player2_id" id="player2_id" required>
+                    {% for profile in profiles %}
+                    <option value="{{ profile.id }}" {% if user and user.id != profile.id and loop.index == 1 %}selected{% endif %}>{{ profile.first_name }} {{ profile.last_name }}</option>
+                    {% endfor %}
+                </select>
+
+                <label for="player1_score">Player 1 Games:</label>
+                <input type="number" name="player1_score" id="player1_score" min="0" max="5" value="0" required>
+
+                <label for="player2_score">Player 2 Games:</label>
+                <input type="number" name="player2_score" id="player2_score" min="0" max="5" value="0" required>
+
+                {% if not user %}
+                <input type="hidden" name="next" value="/">
+                <button type="submit" style="background-color: #3498db;">Login to Log Match</button>
+                {% else %}
+                <button type="submit">Log Match</button>
+                {% endif %}
+            </form>
+            <div id="match-result"></div>
+        </section>
     </div>
     
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="https://unpkg.com/htmx.org/dist/ext/json-enc.js"></script>
-
-</body>
-</html>
+{% endblock %}

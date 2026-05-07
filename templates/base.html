@@ -14,14 +14,19 @@
 </head>
 <body>
     <nav class="navbar">
-        <div><strong>Squash League</strong></div>
+        <div><a href="/" style="text-decoration: none; color: inherit;"><strong>Squash League</strong></a></div>
         <div class="nav-links">
             <a href="/profiles/" {% if request.url.path == '/profiles/' %}style="color: #2ecc71; border-bottom: 2px solid #2ecc71;"{% endif %}>Leaderboard</a>
             <a href="/matches/" {% if request.url.path == '/matches/' %}style="color: #2ecc71; border-bottom: 2px solid #2ecc71;"{% endif %}>Matches</a>
             <a href="/sessions/" {% if request.url.path == '/sessions/' %}style="color: #2ecc71; border-bottom: 2px solid #2ecc71;"{% endif %}>Sessions</a>
         </div>
         <div>
-            <a href="/profiles/my-profile" class="profile-link">My Profile</a>
+            {% if user %}
+                <a href="/profiles/{{ user.id }}" class="profile-link">My Profile</a>
+                <a href="/logout" style="margin-left: 15px;">Logout</a>
+            {% else %}
+                <a href="/login" style="font-weight: bold;">Login</a>
+            {% endif %}
         </div>
     </nav>
     <main>

@@ -1,47 +1,71 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Match Detail</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
-    <style>
-        .match-container { text-align: center; margin-top: 50px; }
-        .score-display { font-size: 3rem; font-weight: bold; margin: 20px 0; }
-        .player-names { display: flex; justify-content: center; gap: 40px; font-size: 1.5rem; }
-        .elo-impact { color: #888; font-size: 1rem; }
-    </style>
-</head>
-<body>
-    <nav>
-        <a href="/">Home</a> | <a href="/profiles/">Leaderboard</a>
-    </nav>
+{% extends "base.html" %}
 
-    <div class="match-container">
-        <h1>Match Result</h1>
-        <p>{{ match.created_at.strftime('%B %d, %Y at %H:%M') }}</p>
+{% block content %}
+<style>
+    .match-container { text-align: center; margin-top: 20px; padding: 20px; border: 1px solid #eee; border-radius: 8px; background-color: #fff; }
+    .score-display { font-size: 4rem; font-weight: bold; margin: 10px 0; color: #2c3e50; }
+    .player-names { display: flex; justify-content: center; align-items: center; gap: 30px; font-size: 1.8rem; }
+    .vs { color: #bdc3c7; font-style: italic; font-size: 1.2rem; }
+    .elo-impact { font-size: 1.1rem; color: #2ecc71; margin-bottom: 20px; }
+    .session-link { margin-top: 30px; padding: 15px; background-color: #f9f9f9; border-radius: 8px; border: 1px solid #ddd; }
+</style>
 
-        <div class="player-names">
-            <div>{{ p1_name }}</div>
-            <div>vs</div>
-            <div>{{ p2_name }}</div>
-        </div>
+<div class="match-container">
+    <h1>Match Details</h1>
+    <p style="color: #7f8c8d;">{{ match.created_at.strftime('%A, %B %d, %Y at %H:%M') }}</p>
 
-        <div class="score-display">
-            {{ match.player1_score }} - {{ match.player2_score }}
-        </div>
-
-        <div class="elo-impact">
-            ELO Change: {{ match.elo_change }} points
-        </div>
-        
-        <p>
-            Winner: 
-            <strong>
-            {% if match.winner_id == 'draw' %} Draw {% elif match.winner_id == match.player1_id %} {{ p1_name }} {% else %} {{ p2_name }} {% endif %}
-            </strong>
-        </p>
+    <div class="player-names">
+        <div>{{ p1_name }}</div>
+        <div class="vs">vs</div>
+        <div>{{ p2_name }}</div>
     </div>
 
-    <hr>
-    <a href="/profiles/">Back to Leaderboard</a>
-</body>
-</html>
+    <div class="score-display">
+        {{ match.player1_score }} - {{ match.player2_score }}
+    </div>
+
+    <div class="elo-impact">
+        ELO Delta: <strong>{{ match.elo_change | int }}</strong>
+    </div>
+    
+    <p>
+        Winner: 
+        <strong style="color: #2c3e50;">
+        {% if match.winner_id == 'draw' %} 
+            It was a draw!
+        {% elif match.winner_id == match.player1_id %} 
+            {{ p1_name }} 
+        {% else %} 
+            {{ p2_name }} 
+        {% endif %}
+        </strong>
+    </p>
+
+    <div class="session-link">
+        {% if current_session %}
+            <p>Part of session at <strong>{{ current_session.location }}</strong> ({{ current_session.start_date.strftime('%Y-%m-%d') }})</p>
+            <a href="/sessions/{{ current_session._id }}">View Session Details</a>
+        {% else %}
+            <p>This match is not yet linked to a session.</p>
+        {% endif %}
+
+        {% if user %}
+        <hr>
+        <form action="/matches/{{ match._id }}/session" method="POST" style="margin-top: 15px;">
+            <label for="session_id">Assign to Session:</label>
+            <select name="session_id" id="session_id" style="width: auto; display: inline-block;">
+                <option value="none">-- Select Session --</option>
+                {% for s in sessions %}
+                <option value="{{ s.id }}" {% if current_session and current_session._id|string == s.id %}selected{% endif %}>
+                    {{ s.start_date.strftime('%Y-%m-%d %H:%M') }} @ {{ s.location }}
+                </option>
+                {% endfor %}
+            </select>
+            <button type="submit" style="padding: 5px 15px;">Update</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<p style="margin-top: 20px;"><a href="/matches/">&larr; Back to Matches</a></p>
+{% endblock %}

@@ -6,7 +6,7 @@ async def drop_targeted():
     connect_to_mongo()
     db = await get_db()
     
-    target_collections = {"profiles", "sessions", "matches"}
+    target_collections = {"profiles", "sessions", "matches", "elo_history"}
     existing = await db.list_collection_names()
     
     for col in existing:

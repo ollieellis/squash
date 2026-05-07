@@ -1,6 +1,16 @@
 {% extends "base.html" %}
 {% block content %}
-    <h1>All Matches</h1>
+    <style>
+        .header-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    </style>
+
+    <div class="header-group">
+        <h1>Matches</h1>
+        <div class="match-actions">
+            {% include 'log_match_modal.html' %}
+        </div>
+    </div>
+
     <table>
         <thead>
             <tr>
@@ -15,7 +25,7 @@
         <tbody>
             {% for entry in matches %}
             <tr>
-                <td>{{ entry.match.created_at.strftime('%Y-%m-%d') }}</td>
+                <td><a href="/matches/{{ entry.match.id }}">{{ entry.match.created_at.strftime('%Y-%m-%d %H:%M') }}</a></td>
                 <td>{{ entry.p1_name }}</td>
                 <td>{{ entry.p2_name }}</td>
                 <td>{{ entry.match.player1_score }} - {{ entry.match.player2_score }}</td>

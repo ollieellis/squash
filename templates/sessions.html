@@ -9,9 +9,11 @@
 
     <div class="header-group">
         <h1>Sessions</h1>
+        {% if user %}
         <div class="session-actions">
             {% include 'create_session_modal.html' %}
         </div>
+        {% endif %}
     </div>
 
     <div class="tabs">
@@ -37,9 +39,20 @@
                 <td>{{ s.num_courts }}</td>
                 <td>{{ s.player_ids|length }}{% if s.max_players %} / {{ s.max_players }}{% endif %} players</td>
                 <td>
-                    <form action="/sessions/{{ s.id }}/join" method="post">
-                        <button type="submit" class="join-btn">Join</button>
-                    </form>
+                    {% if user %}
+                        {% if user.id in s.player_ids %}
+                            <span style="color: #999; font-size: 0.8rem;">Joined</span>
+                        {% else %}
+                            <form action="/sessions/{{ s.id }}/join" method="post">
+                                <button type="submit" class="join-btn">Join</button>
+                            </form>
+                        {% endif %}
+                    {% else %}
+                        <form action="/login" method="get">
+                            <input type="hidden" name="next" value="/sessions/{{ s.id }}">
+                            <button type="submit" class="join-btn">Join</button>
+                        </form>
+                    {% endif %}
                 </td>
             </tr>
 

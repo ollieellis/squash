@@ -40,5 +40,211 @@
     <main>
         {% block content %}{% endblock %}
     </main>
+
+    <!-- Bug report widget -->
+    <style>
+    /* Use primary for accents so widget matches app theme */
+    #bug-widget {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: transparent;
+      border: 2px solid var(--primary);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      z-index: 9999;
+    }
+    /* stroke uses primary to match nav/links */
+    #bug-widget svg { width:28px; height:28px; stroke: var(--primary); stroke-width:15; fill:none; }
+    /* modal */
+    .bug-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:10000;}
+    .bug-modal{
+      background: var(--text-bright);
+      color: #111;
+      padding:20px;
+      border-radius:8px;
+      max-width:420px;
+      width:90%;
+      box-shadow:0 10px 30px rgba(0,0,0,0.12);
+    }
+    .bug-modal h3{margin-top:0;color:var(--primary);}
+
+    /* Inputs inside modal should be light with high-contrast text */
+    .bug-modal input,
+    .bug-modal textarea {
+      background: #ffffff;
+      color: #111;
+      border: 1px solid #d0d7db;
+      padding: 10px;
+      border-radius: 6px;
+      width: 100%;
+      box-sizing: border-box;
+      margin-top: 6px;
+      margin-bottom: 12px;
+    }
+    .bug-modal input::placeholder,
+    .bug-modal textarea::placeholder { color: #9aa4ad; }
+
+    /* Buttons */
+    .bug-modal button#bug-cancel {
+      background: #111;
+      color: var(--text-bright);
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+    }
+    .bug-modal button#bug-cancel:hover { opacity: 0.95; }
+    .bug-modal button[type=submit] { background: var(--primary); color: var(--text-bright); border: none; padding:8px 12px; border-radius:6px; }
+    </style>
+
+    <!-- Dark modal override to match Log Match dialog -->
+    <style>
+    /* Darken dialog and inputs to match app's modal */
+    dialog.bug-modal { background: #0f1720; color: var(--text-bright); border: 1px solid rgba(255,255,255,0.04); box-shadow: 0 12px 40px rgba(2,6,23,0.6); }
+    dialog.bug-modal input, dialog.bug-modal textarea { background: #0b1316; color: #e6eef0; border: 1px solid rgba(255,255,255,0.04); }
+    dialog.bug-modal label { color: rgba(230,238,240,0.85); }
+    dialog.bug-modal button#bug-cancel { background: #0b1316; color: #e6eef0; }
+    dialog.bug-modal button[type=submit] { background: var(--primary); color: var(--text-bright); }
+    </style>
+
+    <div id="bug-widget" title="Report a bug" aria-label="Report a bug" role="button">
+      <!-- chosen bug SVG from Ionicons, recolored to theme -->
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="width:36px;height:36px;display:inline-block;vertical-align:middle;" fill="var(--primary)">
+        <path d="M463.55,272.13H400v-48.2q0-4.32-.27-8.47c29.57-27.88,32.25-64.63,32.27-103,0-8.61-6.64-16-15.25-16.41A16,16,0,0,0,400,112c0,28-1.86,48.15-9.9,63.84-19.22-41.15-65.78-63.91-134.1-63.91-39.8,0-74.19,9.13-99.43,26.39-14.9,10.19-26.2,22.91-33.7,37.72C114,160.65,112,141,112,112.46c0-8.61-6.6-16-15.2-16.44A16,16,0,0,0,80,112c0,37.63,2.61,73.73,32.44,101.63q-.43,5.06-.44,10.3v48.2H48.45c-8.61,0-16,6.62-16.43,15.23a16,16,0,0,0,16,16.77h64V320a143.32,143.32,0,0,0,10.39,53.69C96.74,396.64,80.18,422,80,463.34c0,8.74,6.62,16.3,15.36,16.65A16,16,0,0,0,112,464c0-27.66,9.1-44.71,26.17-61.32A144.37,144.37,0,0,0,220,459.42a16,16,0,0,0,20-15.49V192.45c0-8.61,6.62-16,15.23-16.43A16,16,0,0,1,272,192V443.93a16,16,0,0,0,20,15.49,144.4,144.4,0,0,0,81.82-56.74c17,16.54,26.09,33.52,26.17,60.95A16.27,16.27,0,0,0,415.09,480,16,16,0,0,0,432,464c0-41.68-16.6-67.23-42.39-90.31A143.32,143.32,0,0,0,400,320V304.13h64a16,16,0,0,0,16-16.77C479.58,278.75,472.16,272.13,463.55,272.13Z"/>
+        <path d="M321.39,104l.32.09c13.57,3.8,25.07-10.55,18.2-22.85A95.86,95.86,0,0,0,256.21,32h-.42A95.87,95.87,0,0,0,171.6,82.13c-6.84,12.58,5.14,27,18.84,22.86,19.71-6,41.79-9.06,65.56-9.06C280.09,95.93,302.09,98.65,321.39,104Z"/>
+      </svg>
+    </div>
+
+    <script>
+    (function(){
+      const widget = document.getElementById('bug-widget');
+      const dialog = document.getElementById('bugModal');
+      const form = document.getElementById('bug-form');
+      const cancel = document.getElementById('bug-cancel');
+
+      function open(){
+        if (typeof dialog.showModal === 'function') dialog.showModal();
+        else dialog.setAttribute('open', '');
+        document.getElementById('bug-title').focus();
+      }
+      function close(){
+        try { dialog.close(); } catch(e){ dialog.removeAttribute('open'); }
+        form.reset();
+      }
+
+      widget.addEventListener('click', open);
+      cancel.addEventListener('click', close);
+
+      // dialog outside click close
+      dialog.addEventListener('click', function(e){
+        const rect = dialog.getBoundingClientRect();
+        if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) close();
+      });
+
+      form.addEventListener('submit', async function(e){
+        e.preventDefault();
+        const data = new FormData(form);
+        try {
+          const res = await fetch('/inbox/report', {method:'POST', body: data});
+          if(res.ok){
+            close();
+            const note = document.createElement('div');
+            note.textContent = 'Thanks — bug submitted.';
+            note.style.position = 'fixed';
+            note.style.right = '24px';
+            note.style.bottom = '88px';
+            note.style.background = 'rgba(0,0,0,0.7)';
+            note.style.color = '#fff';
+            note.style.padding = '8px 10px';
+            note.style.borderRadius = '6px';
+            document.body.appendChild(note);
+            setTimeout(()=> note.remove(), 2500);
+          } else {
+            alert('Failed to submit bug');
+          }
+        } catch(err){
+          alert('Failed to submit bug');
+        }
+      });
+    })();
+    </script>
+
+    <dialog id="bugModal" class="bug-modal" role="dialog">
+      <form id="bug-form" method="dialog">
+        <h3>Report a bug</h3>
+        <label for="bug-title">Title</label>
+        <input id="bug-title" name="title" required />
+        <label for="bug-text">Describe the issue</label>
+        <textarea id="bug-text" name="text" rows="4" required></textarea>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
+          <button type="button" id="bug-cancel">Cancel</button>
+          <button type="submit" style="background:var(--primary);color:var(--text-bright);border:none;padding:8px 12px;border-radius:4px;">Submit</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script>
+    (function(){
+      const widget = document.getElementById('bug-widget');
+      const dialog = document.getElementById('bugModal');
+      const form = document.getElementById('bug-form');
+      const cancel = document.getElementById('bug-cancel');
+
+      function open(){
+        if (typeof dialog.showModal === 'function') dialog.showModal();
+        else dialog.setAttribute('open', '');
+        document.getElementById('bug-title').focus();
+      }
+      function close(){
+        try { dialog.close(); } catch(e){ dialog.removeAttribute('open'); }
+        form.reset();
+      }
+
+      widget.addEventListener('click', open);
+      cancel.addEventListener('click', close);
+
+      // close when clicking outside the dialog content
+      dialog.addEventListener('click', function(e){
+        const rect = dialog.getBoundingClientRect();
+        if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) {
+          close();
+        }
+      });
+
+      form.addEventListener('submit', async function(e){
+        e.preventDefault();
+        const data = new FormData(form);
+        try {
+          const res = await fetch('/inbox/report', {method:'POST', body: data});
+          if(res.ok){
+            close();
+            // match modal behaviour: simple reload or show minimal feedback
+            const note = document.createElement('div');
+            note.textContent = 'Thanks — bug submitted.';
+            note.style.position = 'fixed';
+            note.style.right = '24px';
+            note.style.bottom = '88px';
+            note.style.background = 'rgba(0,0,0,0.7)';
+            note.style.color = '#fff';
+            note.style.padding = '8px 10px';
+            note.style.borderRadius = '6px';
+            document.body.appendChild(note);
+            setTimeout(()=> note.remove(), 2500);
+          } else {
+            alert('Failed to submit bug');
+          }
+        } catch(err){
+          alert('Failed to submit bug');
+        }
+      });
+    })();
+    </script>
+
 </body>
 </html>

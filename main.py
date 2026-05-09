@@ -410,3 +410,12 @@ async def read_session(session_id: str, request: Request, user: Optional[Profile
         "sessions_for_modal": recent_sessions,
         "preselected_session_id": session_id
     })
+
+
+@app.post("/inbox/report")
+async def report_bug(title: str = Form(...), text: str = Form(...), user: Optional[Profile] = Depends(get_current_user)):
+    db = await get_db()
+    from datetime import datetime
+    entry = {"title": title, "text": text, "created_at": datetime.utcnow(), "user_id": user.id if user else None}
+    await db.inbox_entries.insert_one(entry)
+    return {"ok": True}

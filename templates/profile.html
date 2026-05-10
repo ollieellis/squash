@@ -12,7 +12,15 @@
         /* Make table compact and responsive */
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 8px 12px; }
+
+        .chart-container { background: rgba(255, 255, 255, 0.03); padding: 20px; border-radius: 8px; margin: 20px 0; height: 400px; position: relative; }
+        .range-selector { display: flex; gap: 10px; margin-bottom: 10px; justify-content: flex-end; }
+        .range-btn { padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; text-decoration: none; border: 1px solid var(--muted); color: var(--muted); }
+        .range-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1/dist/chartjs-adapter-luxon.umd.min.js"></script>
 
     <div class="profile-header">
         <div class="avatar">{{ profile.first_name[0] }}{{ profile.last_name[0] }}</div>
@@ -20,6 +28,16 @@
             <h1>{{ profile.first_name }} {{ profile.last_name }}</h1>
             <p style="color: var(--muted); margin: 0;">Joined {{ profile.created_at.strftime('%B %Y') }}</p>
         </div>
+    </div>
+
+    <div class="chart-container">
+        <div class="range-selector">
+            <a href="?range=1m" class="range-btn {% if current_range == '1m' %}active{% endif %}">1M</a>
+            <a href="?range=3m" class="range-btn {% if current_range == '3m' %}active{% endif %}">3M</a>
+            <a href="?range=6m" class="range-btn {% if current_range == '6m' %}active{% endif %}">6M</a>
+            <a href="?range=all" class="range-btn {% if current_range == 'all' %}active{% endif %}">ALL</a>
+        </div>
+        <canvas id="eloChart"></canvas>
     </div>
 
     <div class="stats-grid">
@@ -84,4 +102,64 @@
     <div style="margin-top: 3rem;">
         <a href="/profiles/">&larr; Back to Leaderboard</a>
     </div>
+
+    <script>
+        const historyData = {{ history_data | tojson }};
+        const ctx = document.getElementById('eloChart').getContext('2d');
+        
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                datasets: [{
+                    label: 'ELO',
+                    data: historyData.map(d => ({ x: d.t, y: d.v })),
+                    borderColor: '#27ae60',
+                    backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.3,
+                    fill: true,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#27ae60'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            unit: 'day',
+                            displayFormats: {
+                                day: 'MMM d'
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: '#888'
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: '#888'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                }
+            }
+        });
+    </script>
 {% endblock %}

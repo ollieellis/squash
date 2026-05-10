@@ -155,3 +155,5 @@ firebase-debug.log
 firestore-debug.log
 .firebase/
 
+#ai
+.gemini/settings.json

@@ -2,35 +2,6 @@
 {% block content %}
     <style>
         .header-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
-        .match-list { display: flex; flex-direction: column; gap: 10px; }
-        .match-row { 
-            display: grid; 
-            grid-template-columns: 120px 1fr 80px 80px 100px; 
-            align-items: center; 
-            padding: 12px; 
-            border-bottom: 1px solid var(--nav-border);
-            text-decoration: none;
-            color: inherit;
-        }
-        .match-row:hover { background-color: rgba(255, 255, 255, 0.05); }
-        .match-date { color: var(--action); font-size: 0.9rem; text-decoration: underline; }
-        .match-players { font-weight: 500; }
-        .match-score { text-align: center; font-weight: bold; }
-        .match-elo { text-align: center; color: var(--primary); font-weight: bold; }
-        .match-session { text-align: right; font-size: 0.8rem; color: var(--action); font-weight: bold; }
-        
-        @media (max-width: 600px) {
-            .match-row { 
-                grid-template-columns: 1fr 60px; 
-                grid-template-areas: "players score" "date elo";
-                gap: 5px;
-            }
-            .match-players { grid-area: players; }
-            .match-score { grid-area: score; text-align: right; }
-            .match-date { grid-area: date; }
-            .match-elo { grid-area: elo; text-align: right; }
-            .match-session { display: none; }
-        }
     </style>
 
     <div class="header-group">
@@ -40,25 +11,34 @@
         </div>
     </div>
 
-    <div class="match-list">
-        {% for entry in matches %}
-        <a href="/matches/{{ entry.match.id }}" class="match-row">
-            <div class="match-date">{{ entry.match.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
-            <div class="match-players">
-                {{ entry.p1_name }} vs {{ entry.p2_name }}
-            </div>
-            <div class="match-score">
-                {{ entry.match.player1_score }} - {{ entry.match.player2_score }}
-            </div>
-            <div class="match-elo">
-                {% if entry.match.elo_change > 0 %}+{% endif %}{{ entry.match.elo_change|int }}
-            </div>
-            <div class="match-session">
-                {% if entry.match.session_id %}
-                View Session &rarr;
-                {% endif %}
-            </div>
-        </a>
-        {% endfor %}
-    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Players</th>
+                <th>Score</th>
+                <th>ELO +/-</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in matches %}
+            <tr>
+                <td>{{ entry.match.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td>
+                    {{ entry.p1_name }} vs {{ entry.p2_name }}
+                </td>
+                <td style="font-weight: bold;">
+                    {{ entry.match.player1_score }} - {{ entry.match.player2_score }}
+                </td>
+                <td style="color: var(--primary); font-weight: bold;">
+                    {% if entry.match.elo_change > 0 %}+{% endif %}{{ entry.match.elo_change|int }}
+                </td>
+                <td>
+                    <a href="/matches/{{ entry.match.id }}">Details &rarr;</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 {% endblock %}

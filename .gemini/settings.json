@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "linear": {
+      "url": "https://mcp.linear.app/mcp",
+      "trust": true,
+      "headers": {
+        "Authorization": "Bearer ${LINEAR_API_KEY}"
+      }
+    }
+  }
+}

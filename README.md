@@ -55,12 +55,12 @@ uv run scripts/drop_db.py
 ### 4. Run the Application
 Start the FastAPI server:
 ```bash
-uv run uvicorn main:app --reload
+uv run uvicorn squash.main:app --reload
 ```
 The application will be available at http://127.0.0.1:8000.
 
 ## Testing
-Run the test suite using `pytest`:
+Run the test suite:
 ```bash
 uv run pytest
 ```

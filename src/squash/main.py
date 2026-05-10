@@ -1,10 +1,10 @@
 from fastapi import FastAPI, Depends, HTTPException, Request, Response, Form
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
-from database import connect_to_mongo, close_mongo_connection, get_db
-from models import Profile, Match, Session, EloHistory
-from elo import calculate_squash_elo
-from auth import verify_password, get_password_hash, create_access_token, decode_access_token
+from .database import connect_to_mongo, close_mongo_connection, get_db
+from .models import Profile, Match, Session, EloHistory
+from .elo import calculate_squash_elo
+from .auth import verify_password, get_password_hash, create_access_token, decode_access_token
 from contextlib import asynccontextmanager
 from bson import ObjectId
 from typing import Optional
@@ -109,7 +109,7 @@ async def list_profiles(request: Request, user: Optional[Profile] = Depends(get_
     return templates.TemplateResponse(request=request, name="profiles.html", context={"profiles": profiles, "user": user})
 
 @app.get("/profiles/{profile_id}")
-async def read_profile(profile_id: str, request: Request, user: Optional[Profile] = Depends(get_current_user)):
+async def read_profile(profile_id: str, request: Request, range: str = "6m", user: Optional[Profile] = Depends(get_current_user)):
     db = await get_db()
     try:
         doc = await db.profiles.find_one({"_id": ObjectId(profile_id)})
@@ -138,7 +138,35 @@ async def read_profile(profile_id: str, request: Request, user: Optional[Profile
         res = "D" if match.winner_id == "draw" else ("W" if match.winner_id == profile_id else "L")
         form_guide.append({"result": res, "match_id": match.id})
 
-    return templates.TemplateResponse(request=request, name="profile.html", context={"profile": profile, "form_guide": form_guide, "recent_matches": recent_matches, "user": user})
+    # Fetch ELO History for Graphing
+    from datetime import datetime, timedelta
+    now = datetime.utcnow()
+    history_query = {"profile_id": profile_id}
+    
+    if range == "1m":
+        history_query["timestamp"] = {"$gte": now - timedelta(days=30)}
+    elif range == "3m":
+        history_query["timestamp"] = {"$gte": now - timedelta(days=90)}
+    elif range == "6m":
+        history_query["timestamp"] = {"$gte": now - timedelta(days=180)}
+    # "all" or invalid range shows everything
+
+    history_cursor = db.elo_history.find(history_query).sort("timestamp", 1)
+    history_data = []
+    async for h in history_cursor:
+        history_data.append({
+            "t": h["timestamp"].isoformat(),
+            "v": h["elo_value"]
+        })
+
+    return templates.TemplateResponse(request=request, name="profile.html", context={
+        "profile": profile, 
+        "form_guide": form_guide, 
+        "recent_matches": recent_matches, 
+        "user": user,
+        "history_data": history_data,
+        "current_range": range
+    })
 
 @app.post("/matches/")
 async def log_match(request: Request, user: Profile = Depends(login_required)):

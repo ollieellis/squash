@@ -1,6 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
-from main import app
+from squash.main import app
 import asyncio
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorClient

@@ -1,6 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
-from main import app
+from squash.main import app
 
 @pytest.fixture
 def client():

@@ -1,7 +1,8 @@
 import pytest
 from fastapi.testclient import TestClient
-from main import app
-from database import get_db
+from squash.main import app
+from squash.database import get_db
+from bson import ObjectId
 
 @pytest.fixture
 def client():
@@ -9,23 +10,33 @@ def client():
         yield c
 
 def test_create_profile(client):
-    response = client.post("/profiles/", json={"first_name": "Test", "last_name": "User", "elo": 1000})
+    email = f"test_{ObjectId()}@user.com"
+    # Registration
+    client.post("/register", data={"first_name": "Test", "last_name": "User", "email": email, "password": "password123"})
+    
+    # Explicit login
+    client.post("/login", data={"email": email, "password": "password123"})
+    
+    # Check leaderboard
+    response = client.get("/profiles/")
     assert response.status_code == 200
-    # The response is an HTML fragment for HTMX
-    assert "Profile Created!" in response.text
+    assert "Leaderboard" in response.text
     assert "Test User" in response.text
-    assert "1000" in response.text
 
 def test_list_profiles(client):
-    # Ensure there's at least one profile
-    client.post("/profiles/", json={"first_name": "List", "last_name": "Tester", "elo": 1200})
+    email = f"list_{ObjectId()}@tester.com"
+    # Register a user so they appear on leaderboard
+    client.post("/register", data={"first_name": "List", "last_name": "Tester", "email": email, "password": "password123"})
     
     response = client.get("/profiles/")
     assert response.status_code == 200
-    assert "Squash Leaderboard" in response.text
+    assert "Leaderboard" in response.text
     assert "List Tester" in response.text
 
 def test_duplicate_profile(client):
-    client.post("/profiles/", json={"first_name": "Unique", "last_name": "Player", "elo": 1200})
-    response = client.post("/profiles/", json={"first_name": "Unique", "last_name": "Player", "elo": 1200})
-    assert response.status_code == 409
+    email = f"unique_{ObjectId()}@player.com"
+    client.post("/register", data={"first_name": "Unique", "last_name": "Player", "email": email, "password": "password123"})
+    response = client.post("/register", data={"first_name": "Unique", "last_name": "Player", "email": email, "password": "password123"})
+    # Registration returns a 200 with an error message in HTML context
+    assert response.status_code == 200
+    assert "Email already registered" in response.text

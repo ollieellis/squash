@@ -1,6 +1,23 @@
 {% extends "base.html" %}
 {% block content %}
     <h1>Squash Leaderboard</h1>
+    <style>
+        .form-indicator { 
+            display: inline-block; 
+            width: 20px; 
+            height: 20px; 
+            line-height: 20px; 
+            text-align: center; 
+            border-radius: 4px; 
+            font-size: 0.75em; 
+            font-weight: bold;
+            margin-right: 2px; 
+            color: white; 
+        }
+        .win { background: var(--primary); }
+        .loss { background: var(--danger); }
+        .draw { background: var(--muted); }
+    </style>
 
     <table class="leaderboard-table">
         <thead>
@@ -8,14 +25,20 @@
                 <th>Rank</th>
                 <th>Player</th>
                 <th>ELO</th>
+                <th>Recent Form</th>
             </tr>
         </thead>
         <tbody>
-            {% for profile in profiles %}
+            {% for entry in profiles %}
             <tr>
                 <td>{{ loop.index }}</td>
-                <td><a href="/profiles/{{ profile.id }}">{{ profile.first_name }} {{ profile.last_name }}</a></td>
-                <td>{{ profile.elo|int }}</td>
+                <td><a href="/profiles/{{ entry.profile.id }}">{{ entry.profile.first_name }} {{ entry.profile.last_name }}</a></td>
+                <td>{{ entry.profile.elo|int }}</td>
+                <td>
+                    {% for res in entry.form %}
+                        <span class="form-indicator {% if res == 'W' %}win{% elif res == 'L' %}loss{% else %}draw{% endif %}">{{ res }}</span>
+                    {% endfor %}
+                </td>
             </tr>
             {% endfor %}
         </tbody>

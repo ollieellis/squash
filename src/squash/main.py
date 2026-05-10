@@ -106,7 +106,19 @@ async def list_profiles(request: Request, user: Optional[Profile] = Depends(get_
     db = await get_db()
     profiles_cursor = db.profiles.find().sort("elo", -1)
     profiles = [Profile(**{**doc, "id": str(doc["_id"])}) async for doc in profiles_cursor]
-    return templates.TemplateResponse(request=request, name="profiles.html", context={"profiles": profiles, "user": user})
+    
+    # Enrich with recent form
+    enriched_profiles = []
+    for p in profiles:
+        matches_cursor = db.matches.find({"$or": [{"player1_id": p.id}, {"player2_id": p.id}]}).sort("created_at", -1).limit(5)
+        recent_matches = []
+        async for m in matches_cursor:
+            match = Match(**{**m, "id": str(m["_id"])})
+            res = "D" if match.winner_id == "draw" else ("W" if match.winner_id == p.id else "L")
+            recent_matches.append(res)
+        enriched_profiles.append({"profile": p, "form": recent_matches})
+        
+    return templates.TemplateResponse(request=request, name="profiles.html", context={"profiles": enriched_profiles, "user": user})
 
 @app.get("/profiles/{profile_id}")
 async def read_profile(profile_id: str, request: Request, range: str = "6m", user: Optional[Profile] = Depends(get_current_user)):
@@ -268,6 +280,18 @@ async def update_match_session(match_id: str, session_id: str = Form(...), user:
     )
     return RedirectResponse(url=f"/matches/{match_id}", status_code=303)
 
+async def get_modal_data(db):
+    profiles_cursor = db.profiles.find().sort("first_name", 1)
+    profiles = [Profile(**{**doc, "id": str(doc["_id"])}) async for doc in profiles_cursor]
+    
+    from datetime import datetime, timedelta
+    recent_sessions_cursor = db.sessions.find({
+        "start_date": {"$gte": datetime.utcnow() - timedelta(days=7)}
+    }).sort("start_date", -1)
+    recent_sessions = [Session(**{**s, "id": str(s["_id"])}) async for s in recent_sessions_cursor]
+    
+    return profiles, recent_sessions
+
 @app.get("/matches/")
 async def list_matches(request: Request, user: Optional[Profile] = Depends(get_current_user)):
     db = await get_db()
@@ -283,15 +307,7 @@ async def list_matches(request: Request, user: Optional[Profile] = Depends(get_c
             "p2_name": f"{p2['first_name']} {p2['last_name']}" if p2 else "Unknown"
         })
     
-    # Get profiles and recent sessions for the Log Match modal
-    profiles_cursor = db.profiles.find().sort("first_name", 1)
-    profiles = [Profile(**{**doc, "id": str(doc["_id"])}) async for doc in profiles_cursor]
-    
-    from datetime import datetime, timedelta
-    recent_sessions_cursor = db.sessions.find({
-        "start_date": {"$gte": datetime.utcnow() - timedelta(days=7)}
-    }).sort("start_date", -1)
-    recent_sessions = [Session(**{**s, "id": str(s["_id"])}) async for s in recent_sessions_cursor]
+    profiles, recent_sessions = await get_modal_data(db)
     
     return templates.TemplateResponse(request=request, name="matches.html", context={
         "matches": enriched, 
@@ -420,14 +436,7 @@ async def read_session(session_id: str, request: Request, user: Optional[Profile
         })
             
     # Get profiles and recent sessions for the Log Match modal
-    profiles_cursor = db.profiles.find().sort("first_name", 1)
-    profiles = [Profile(**{**doc, "id": str(doc["_id"])}) async for doc in profiles_cursor]
-    
-    from datetime import datetime, timedelta
-    recent_sessions_cursor = db.sessions.find({
-        "start_date": {"$gte": datetime.utcnow() - timedelta(days=7)}
-    }).sort("start_date", -1)
-    recent_sessions = [Session(**{**s, "id": str(s["_id"])}) async for s in recent_sessions_cursor]
+    profiles, recent_sessions = await get_modal_data(db)
             
     return templates.TemplateResponse(request=request, name="session_detail.html", context={
         "session": session,

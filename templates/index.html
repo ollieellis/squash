@@ -41,8 +41,9 @@
 
                 <label for="player2_id">Player 2:</label>
                 <select name="player2_id" id="player2_id" required>
+                    <option value="" disabled selected>-- Select an opponent --</option>
                     {% for profile in profiles %}
-                    <option value="{{ profile.id }}" {% if user and user.id != profile.id and loop.index == 1 %}selected{% endif %}>{{ profile.first_name }} {{ profile.last_name }}</option>
+                    <option value="{{ profile.id }}" {% if user and user.id == profile.id %}disabled{% endif %}>{{ profile.first_name }} {{ profile.last_name }}</option>
                     {% endfor %}
                 </select>
 

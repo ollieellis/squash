@@ -1,6 +1,7 @@
 <!-- templates/log_match_modal.html -->
 <dialog id="matchModal">
-    <form {% if user %}hx-post="/matches/" hx-target="#match-result" hx-on::after-request="if(event.detail.successful) document.getElementById('matchModal').close(); window.location.reload();" {% else %}action="/login" method="get"{% endif %}>
+    <form {% if user %}hx-post="/matches/" hx-target="#match-result" hx-on::after-request="if(event.detail.successful) document.getElementById('matchModal').close(); window.location.reload();" {% else %}action="/login" method="get"{% endif %} 
+          onkeydown="if((event.metaKey || event.ctrlKey) && event.key === 'Enter') this.submit()">
         <h3>Log Match</h3>
         
         <label for="player1_id">Player 1:</label>
@@ -12,8 +13,9 @@
 
         <label for="player2_id">Player 2:</label>
         <select name="player2_id" id="player2_id" required>
+            <option value="" disabled selected>-- Select an opponent --</option>
             {% for profile in profiles_for_modal %}
-            <option value="{{ profile.id }}" {% if user and user.id != profile.id and loop.index == 1 %}selected{% endif %}>{{ profile.first_name }} {{ profile.last_name }}</option>
+            <option value="{{ profile.id }}" {% if user and user.id == profile.id %}disabled{% endif %}>{{ profile.first_name }} {{ profile.last_name }}</option>
             {% endfor %}
         </select>
 

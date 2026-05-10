@@ -59,6 +59,14 @@ uv run uvicorn squash.main:app --reload
 ```
 The application will be available at http://127.0.0.1:8000.
 
+## Recent Improvements
+
+### Smart Match Logging (OLL-8)
+We've streamlined the match logging process:
+*   **Auto-Pre-population:** When logged in, your profile is automatically selected as Player 1.
+*   **Keyboard Shortcuts:** Use `Cmd+Enter` (or `Ctrl+Enter`) to rapidly submit the Log Match modal.
+*   **Context-Aware:** If logging from a Session page, the session is pre-selected for you.
+
 ## Testing
 Run the test suite:
 ```bash
